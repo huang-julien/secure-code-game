@@ -27,4 +27,4 @@ jobs:
       - name: Check GitHub Status
         run: |
           status=$(curl -s https://www.githubstatus.com/api/v2/status.json | jq -r '.status.description')
-          echo status
+          echo $status
