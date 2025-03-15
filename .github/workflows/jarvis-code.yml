@@ -26,5 +26,5 @@ jobs:
         uses: actions/checkout@v4
       - name: Check GitHub Status
         run: |
-          curl -s https://www.githubstatus.com/api/v2/status.json | jq -r '.status.description'
-         
+          status=$(curl -s https://www.githubstatus.com/api/v2/status.json | jq -r '.status.description')
+          echo status
