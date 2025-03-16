@@ -2,20 +2,26 @@
 
 // This is the last level of this season, good luck!
 
-var CryptoAPI = (function() {
-	var encoding = {
+const CryptoAPI = (function() {
+	const encoding = {
 		a2b: function(a) { },
 		b2a: function(b) { }
 	};
 
-	var API = {
+	const API = {
 		sha1: {
 			name: 'sha1',
 			identifier: '2b0e03021a',
 			size: 20,
 			block: 64,
-			hash: function(s) {
-				var len = (s += '\x80').length,
+			hash: function(str) {
+				if (typeof str === 'object' && Object.values(str).every(val => typeof val === 'function')) {
+					throw new Error('argement must have at least one primitive property if object')
+				}
+				const stringified = JSON.stringify(str)
+
+				let s = stringified + '\x80'
+				let  len = s.length,
 					blocks = len >> 6,
 					chunk = len & 63,
 					res = "",
@@ -54,5 +60,22 @@ var CryptoAPI = (function() {
 		} // End "sha1"
 	}; // End "API"
 
+	deepFreeze(API);
+
 	return API; // End body of anonymous function
 })(); // End "CryptoAPI"
+
+Object.freeze(Array.prototype)
+
+/**
+ * Deep freeze an object
+ * @param {Object} obj 
+ */
+function deepFreeze(obj) {
+	Object.keys(obj).forEach(prop => {
+		if (typeof obj[prop] === 'object' && !Object.isFrozen(obj[prop])) {
+			deepFreeze(obj[prop]);
+		}
+	});
+	return Object.freeze(obj);
+}
