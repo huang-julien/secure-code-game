@@ -101,7 +101,7 @@ app.post("/ufo", (req, res) => {
       }
     } catch (error) {
       console.error("XML parsing or validation error:", error.message);
-      res.status(400).send("Invalid XML: " + error.message);
+      res.status(400).send("Invalid XML");
     }
   } else {
     res.status(405).send("Unsupported content type");
