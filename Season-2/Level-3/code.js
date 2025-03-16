@@ -17,6 +17,7 @@ const path = require("path");
 const fs = require("fs");
 const { exec } = require("node:child_process");
 const app = express();
+const rateLimit = require("express-rate-limit");
 
 app.use(bodyParser.json());
 app.use(bodyParser.text({ type: "application/xml" }));
@@ -24,18 +25,31 @@ app.use(bodyParser.text({ type: "application/xml" }));
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-app.post("/ufo/upload", upload.single("file"), (req, res) => {
-  if (!req.file) {
-    return res.status(400).send("No file uploaded.");
-  }
+const limiter = rateLimit({
+	windowMs: 15 * 60 * 1000, // 15 minutes
+	limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
+	standardHeaders: 'draft-8', // draft-6: `RateLimit-*` headers; draft-7 & draft-8: combined `RateLimit` header
+	legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
+	// store: ... , // Redis, Memcached, etc. See below.
+})
 
-  console.log("Received uploaded file:", req.file.originalname);
+app.use(limiter)
 
-  const uploadedFilePath = path.join(__dirname, req.file.originalname);
-  fs.writeFileSync(uploadedFilePath, req.file.buffer);
+// app.post("/ufo/upload", upload.single("file"), (req, res) => {
+//   if (!req.file) {
+//     return res.status(400).send("No file uploaded.");
+//   }
 
-  res.status(200).send("File uploaded successfully.");
-});
+//   console.log("Received uploaded file:", req.file.originalname);
+
+//   const uploadedFilePath = fs.realpathSync(path.join(__dirname, req.file.originalname));
+//   if (!uploadedFilePath.startsWith(__dirname)) {
+//     return res.status(403);
+//   }
+//   fs.writeFileSync(uploadedFilePath, req.file.buffer);
+
+//   res.status(200).send("File uploaded successfully.");
+// });
 
 app.post("/ufo", (req, res) => {
   const contentType = req.headers["content-type"];
@@ -46,9 +60,9 @@ app.post("/ufo", (req, res) => {
   } else if (contentType === "application/xml") {
     try {
       const xmlDoc = libxmljs.parseXml(req.body, {
-        replaceEntities: true,
-        recover: true,
-        nonet: false,
+        replaceEntities: false,
+        recover: false,
+        nonet: true,
       });
 
       console.log("Received XML data from XMLon:", xmlDoc.toString());
